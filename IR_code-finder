@@ -1,0 +1,48 @@
+#include <Arduino.h>
+#include <IRremote.hpp>
+
+// IR receiver signal pin (Y)
+const uint8_t IR_PIN = 2;
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial) {}
+
+  // Start IR receiver
+  IrReceiver.begin(IR_PIN, ENABLE_LED_FEEDBACK);
+
+  Serial.println("\nIR Remote Test (UNO R4)");
+  Serial.println("Wiring: G->GND, R->5V, Y->D2");
+  Serial.println("Press remote buttons; codes will print below.");
+  Serial.println("Tip: Hold a button to see if it repeats.\n");
+}
+
+void loop() {
+  if (IrReceiver.decode()) {
+    // Raw code (good for mapping buttons)
+    uint32_t raw = IrReceiver.decodedIRData.decodedRawData;
+
+    // Protocol + command are also useful (often more stable than raw)
+    auto proto = IrReceiver.decodedIRData.protocol;
+    uint16_t addr = IrReceiver.decodedIRData.address;
+    uint16_t cmd  = IrReceiver.decodedIRData.command;
+    bool isRepeat = IrReceiver.decodedIRData.flags & IRDATA_FLAGS_IS_REPEAT;
+
+    Serial.print("RAW: 0x");
+    Serial.print(raw, HEX);
+
+    Serial.print(" | Protocol: ");
+    Serial.print(getProtocolString(proto));
+
+    Serial.print(" | Addr: 0x");
+    Serial.print(addr, HEX);
+
+    Serial.print(" | Cmd: 0x");
+    Serial.print(cmd, HEX);
+
+    Serial.print(" | Repeat: ");
+    Serial.println(isRepeat ? "YES" : "NO");
+
+    IrReceiver.resume(); // ready for next code
+  }
+}
